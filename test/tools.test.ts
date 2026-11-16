@@ -9,7 +9,7 @@ const hit = {
   highlights: ["fast", "runtime"],
 };
 
-test("web_search sends the key, maps options to Exa's body and formats results", async () => {
+test("web_search_exa sends the key, maps options to Exa's body and formats results", async () => {
   const { client, seen } = fakeExa(() => ({ results: [hit], costDollars: { total: 0.007 } }));
   const tool = searchTool(deps(client));
   const r = await tool.invoke(
@@ -35,7 +35,7 @@ test("web_search sends the key, maps options to Exa's body and formats results",
   expect(Date.now() - since).toBeLessThan(7.1 * 86_400_000);
 });
 
-test("web_search clamps numResults, honours contents modes and drops unknown categories", async () => {
+test("web_search_exa clamps numResults, honours contents modes and drops unknown categories", async () => {
   const { client, seen } = fakeExa(() => ({ results: [] }));
   const tool = searchTool(deps(client));
   expect(
@@ -47,14 +47,14 @@ test("web_search clamps numResults, honours contents modes and drops unknown cat
   expect(seen[1]?.body.contents).toBeUndefined();
 });
 
-test("web_search truncates long excerpts", async () => {
+test("web_search_exa truncates long excerpts", async () => {
   const { client } = fakeExa(() => ({ results: [{ url: "https://a.b", text: "x".repeat(5000) }] }));
   const out = textOf(await searchTool(deps(client)).invoke({ query: "q", maxCharacters: 300 }, call()));
   expect(out.endsWith("...")).toBe(true);
   expect(out.length).toBeLessThan(400);
 });
 
-test("web_fetch posts urls to /contents and reports URLs Exa could not fetch", async () => {
+test("web_fetch_exa posts urls to /contents and reports URLs Exa could not fetch", async () => {
   const { client, seen } = fakeExa(() => ({
     results: [{ url: "https://a.test", title: "A", text: "hello" }],
     statuses: [
@@ -74,7 +74,7 @@ test("web_fetch posts urls to /contents and reports URLs Exa could not fetch", a
   });
 });
 
-test("web_fetch is an error when nothing comes back", async () => {
+test("web_fetch_exa is an error when nothing comes back", async () => {
   const { client } = fakeExa(() => ({
     results: [],
     statuses: [{ id: "https://b.test", status: "error", error: { tag: "SOURCE_NOT_AVAILABLE" } }],

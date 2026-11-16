@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "tools@1 web_search and web_fetch backed by the Exa API.",
+  "description": "tools@1 web_search_exa and web_fetch_exa backed by the Exa API.",
   "scripts": {
     "typecheck": "tsc --noEmit -p .",
     "lint": "biome check .",

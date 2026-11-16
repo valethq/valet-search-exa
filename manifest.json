@@ -3,7 +3,7 @@
   "id": "valet-search-exa",
   "name": "Exa Search",
   "version": "0.1.0",
-  "description": "web_search and web_fetch tools backed by the Exa API.",
+  "description": "web_search_exa and web_fetch_exa tools backed by the Exa API.",
   "repository": "https://github.com/valethq/valet-search-exa",
   "valet": "^0.1.0",
   "main": "./src/index.ts",

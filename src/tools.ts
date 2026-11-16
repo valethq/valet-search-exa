@@ -80,9 +80,9 @@ export function searchTool(deps: ToolDeps): ToolDefinition {
   return guarded(
     deps,
     {
-      name: "web_search",
+      name: "web_search_exa",
       description:
-        "Search the web with Exa and return titles, URLs and page excerpts. Good for current events, docs, papers and finding pages by meaning. Use web_fetch to read a specific URL in full.",
+        "Search the web with Exa and return titles, URLs and page excerpts. Good for current events, docs, papers and finding pages by meaning. Use web_fetch_exa to read a specific URL in full.",
       inputSchema: {
         type: "object",
         properties: {
@@ -156,9 +156,9 @@ export function fetchTool(deps: ToolDeps): ToolDefinition {
   return guarded(
     deps,
     {
-      name: "web_fetch",
+      name: "web_fetch_exa",
       description:
-        "Fetch one or more web pages through Exa and return their text. Use after web_search, or for any URL you already have.",
+        "Fetch one or more web pages through Exa and return their text. Use after web_search_exa, or for any URL you already have.",
       inputSchema: {
         type: "object",
         properties: {

@@ -120,19 +120,19 @@ afterAll(async () => {
   await exa?.stop(true);
 });
 
-test("web_search and web_fetch run through the agent loop with the key from the secrets dir", async () => {
+test("web_search_exa and web_fetch_exa run through the agent loop with the key from the secrets dir", async () => {
   const plugins: Json = await api("/api/core/plugins");
   const states = Object.fromEntries(
     (Array.isArray(plugins) ? plugins : plugins.plugins).map((p: Json) => [p.id, p.state]),
   );
   expect(states["valet-search-exa"]).toBe("active");
 
-  const search = await call("web_search", { query: "valet plugins", recency: "month" });
-  expect(search.parts[0].data).toMatchObject({ name: "web_search", status: "done" });
+  const search = await call("web_search_exa", { query: "valet plugins", recency: "month" });
+  expect(search.parts[0].data).toMatchObject({ name: "web_search_exa", status: "done" });
   expect(search.parts[0].data.output).toBe("[1] Hit\nhttps://example.test/a\nfound it");
   expect(requests[0]).toMatchObject({ path: "/search", key: "kernel-key", body: { query: "valet plugins" } });
 
-  const page = await call("web_fetch", { urls: ["https://example.test/a"] });
-  expect(page.parts[0].data).toMatchObject({ name: "web_fetch", status: "done" });
+  const page = await call("web_fetch_exa", { urls: ["https://example.test/a"] });
+  expect(page.parts[0].data).toMatchObject({ name: "web_fetch_exa", status: "done" });
   expect(requests[1]).toMatchObject({ path: "/contents", body: { urls: ["https://example.test/a"] } });
 });

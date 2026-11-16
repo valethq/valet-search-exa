@@ -1,6 +1,6 @@
 # valet-search-exa
 
-tools@1 web_search and web_fetch tools backed by the Exa API.
+tools@1 web_search_exa and web_fetch_exa tools backed by the Exa API.
 
 Rules for this repo. The contract lives in `../valet-core`.
 
