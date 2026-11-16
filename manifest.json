@@ -12,13 +12,29 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
-      "secret": { "type": "string" },
-      "baseUrl": { "type": "string" },
-      "searchType": { "type": "string", "enum": ["auto", "fast", "deep"] },
-      "numResults": { "type": "number" },
-      "maxCharacters": { "type": "number" },
-      "timeoutMs": { "type": "number" },
-      "minRole": { "type": "string", "enum": ["owner", "trusted", "guest"] }
+      "secret": {
+        "type": "string"
+      },
+      "baseUrl": {
+        "type": "string"
+      },
+      "mode": {
+        "type": "string",
+        "enum": ["auto", "fast", "deep"]
+      },
+      "numResults": {
+        "type": "number"
+      },
+      "maxCharacters": {
+        "type": "number"
+      },
+      "timeoutMs": {
+        "type": "number"
+      },
+      "minRole": {
+        "type": "string",
+        "enum": ["owner", "trusted", "guest"]
+      }
     }
   }
 }

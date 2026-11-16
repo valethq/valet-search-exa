@@ -1,25 +1,29 @@
 import type { ToolCall } from "@valethq/sdk";
 import { settings } from "../src/config";
-import { type ExaClient, type ExaResponse, exaClient } from "../src/exa";
+import { makeHttp } from "../src/http";
+import { provider } from "../src/provider";
 import type { ToolDeps } from "../src/tools";
+import type { Http } from "../src/types";
 
 export interface Seen {
   path: string;
   body: Record<string, unknown>;
-  key: string | null;
+  headers: Headers;
 }
 
-export function fakeExa(reply: (path: string) => ExaResponse | Response, key: string | null = "k-123") {
+export function fakeApi(reply: (path: string) => unknown, key: string | null = "k-123") {
   const seen: Seen[] = [];
-  const client: ExaClient = exaClient({
-    baseUrl: "http://exa.test",
+  const client: Http = makeHttp({
+    provider,
+    baseUrl: () => "http://api.test",
+    secret: () => provider.secret,
     key: async () => key ?? undefined,
     fetch: async (input, init) => {
       const path = new URL(input).pathname;
       seen.push({
         path,
         body: JSON.parse(String(init.body)),
-        key: new Headers(init.headers).get("x-api-key"),
+        headers: new Headers(init.headers),
       });
       const r = reply(path);
       return r instanceof Response ? r : Response.json(r);
@@ -28,9 +32,9 @@ export function fakeExa(reply: (path: string) => ExaResponse | Response, key: st
   return { client, seen };
 }
 
-export function deps(exa: ExaClient, cfg: Parameters<typeof settings>[0] = {}): ToolDeps {
-  const s = settings(cfg);
-  return { exa, settings: () => s };
+export function deps(http: Http, cfg: Parameters<typeof settings>[0] = {}): ToolDeps {
+  const s = settings(cfg, provider);
+  return { provider, http, settings: () => s };
 }
 
 export const call = (role: ToolCall["role"] = "trusted"): ToolCall => ({
@@ -46,3 +50,6 @@ export const call = (role: ToolCall["role"] = "trusted"): ToolCall => ({
 
 export const textOf = (r: { content: { type: string; text?: string }[] }) =>
   r.content.map((c) => c.text ?? "").join("");
+
+/** A minimal successful search reply in this provider's shape; shared tests use it. */
+export const ok = { results: [{ title: "T", url: "https://a.test", highlights: ["h"] }] };

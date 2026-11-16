@@ -27,7 +27,7 @@ All optional, under `plugins.valet-search-exa.config`:
 
 - `secret`: secret name (default `exa_api_key`)
 - `baseUrl`: default `https://api.exa.ai`
-- `searchType`: `auto` (default), `fast` or `deep`
+- `mode`: Exa search type: `auto` (default), `fast` or `deep`
 - `numResults`: default 8, max 25
 - `maxCharacters`: per-result excerpt size, default 2000 (`web_fetch_exa` uses 4x)
 - `timeoutMs`: default 30000

@@ -1,28 +1,29 @@
 import { definePlugin } from "@valethq/sdk";
-import { type ExaConfig, RANK, settings } from "./config";
-import { exaClient } from "./exa";
+import { type ProviderConfig, RANK, settings } from "./config";
+import { makeHttp } from "./http";
+import { provider } from "./provider";
 import { fetchTool, searchTool } from "./tools";
 
-export default definePlugin<ExaConfig>({
+export default definePlugin<ProviderConfig>({
   async activate(ctx) {
-    let current = settings(ctx.config);
-    const exa = exaClient({
-      get baseUrl() {
-        return current.baseUrl;
-      },
+    let current = settings(ctx.config, provider);
+    const http = makeHttp({
+      provider,
+      baseUrl: () => current.baseUrl,
+      secret: () => current.secret,
       key: () => ctx.secrets.get(current.secret),
     });
     if (!(await ctx.secrets.get(current.secret))) {
-      ctx.log.warn("no Exa API key yet; tools will report it until one is added", { secret: current.secret });
+      ctx.log.warn("no API key yet; tools will report it until one is added", { secret: current.secret });
     }
     ctx.onConfigChange((next) => {
-      current = settings(next);
+      current = settings(next, provider);
     });
-    const deps = { exa, settings: () => current };
+    const deps = { provider, http, settings: () => current };
     const tools = [searchTool(deps), fetchTool(deps)];
     ctx.scopes.provide("tools", {
       list: ({ role }) => (RANK[role] >= RANK[current.minRole] ? tools : []),
     });
-    ctx.log.info("exa search ready", { minRole: current.minRole });
+    ctx.log.info(`${provider.id} search ready`, { minRole: current.minRole });
   },
 });
