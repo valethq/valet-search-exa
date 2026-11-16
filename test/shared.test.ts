@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { provider } from "../src/provider";
-import { fetchTool, searchTool } from "../src/tools";
+import { searchTool } from "../src/tools";
 import { ok } from "./fixture";
 import { call, deps, fakeApi, textOf } from "./helpers";
 
