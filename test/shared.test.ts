@@ -1,7 +1,8 @@
 import { expect, test } from "bun:test";
 import { provider } from "../src/provider";
 import { fetchTool, searchTool } from "../src/tools";
-import { call, deps, fakeApi, ok, textOf } from "./helpers";
+import { ok } from "./fixture";
+import { call, deps, fakeApi, textOf } from "./helpers";
 
 test("HTTP failures become readable tool errors", async () => {
   for (const [status, hint] of [

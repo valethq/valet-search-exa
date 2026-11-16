@@ -2,8 +2,10 @@ import { afterAll, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { provider } from "../src/provider";
+import { kernel } from "./fixture";
 
-// Boots the real kernel with valet-agent and a scripted model; Exa is a local fake server.
+// Boots the real kernel with valet-agent and a scripted model; the provider API is a local fake server.
 const CORE = process.env.VALET_CORE_DIR ?? join(import.meta.dir, "..", "..", "valet-core");
 const CLI = join(CORE, "packages/core/src/cli.ts");
 const VALET = join(import.meta.dir, "..", "..");
@@ -18,9 +20,10 @@ setDefaultTimeout(40_000);
 let home: string;
 let base: string;
 let proc: Bun.Subprocess | undefined;
-let exa: ReturnType<typeof Bun.serve> | undefined;
+let fake: ReturnType<typeof Bun.serve> | undefined;
 let sessionId: string;
 const requests: { path: string; key: string | null; body: Json }[] = [];
+const PLUGIN: string = JSON.parse(readFileSync(join(ROOT, "manifest.json"), "utf8")).id;
 
 function shim(id: string, dir: string): void {
   const out = join(home, "plugins", id);
@@ -66,23 +69,21 @@ async function call(tool: string, input: unknown): Promise<Json> {
 }
 
 beforeAll(async () => {
-  exa = Bun.serve({
+  fake = Bun.serve({
     port: 0,
     async fetch(req) {
       const body = await req.json();
-      requests.push({ path: new URL(req.url).pathname, key: req.headers.get("x-api-key"), body });
-      return Response.json({
-        results: [{ title: "Hit", url: "https://example.test/a", highlights: ["found it"] }],
-      });
+      requests.push({ path: new URL(req.url).pathname, key: req.headers.get(kernel.authHeader), body });
+      return Response.json(kernel.reply);
     },
   });
   home = mkdtempSync(join(tmpdir(), "valet-search-exa-kernel-"));
   const workspace = mkdtempSync(join(tmpdir(), "valet-search-exa-ws-"));
-  shim("valet-search-exa", ROOT);
+  shim(PLUGIN, ROOT);
   shim("valet-agent", join(VALET, "valet-agent"));
   shim("valet-contextmanager", join(VALET, "valet-contextmanager"));
   mkdirSync(join(home, "secrets"), { recursive: true });
-  writeFileSync(join(home, "secrets", "exa_api_key"), "kernel-key\n", { mode: 0o600 });
+  writeFileSync(join(home, "secrets", provider.secret), "kernel-key\n", { mode: 0o600 });
   const probe = Bun.serve({ port: 0, fetch: () => new Response("") });
   const port = probe.port as number;
   await probe.stop(true);
@@ -94,7 +95,7 @@ beforeAll(async () => {
       pluginPaths: [join(import.meta.dir, "fixtures", "plugins"), join(home, "plugins")],
       plugins: {
         "valet-fixture-auth": { config: { token: "tok" } },
-        "valet-search-exa": { config: { baseUrl: `http://127.0.0.1:${exa.port}` } },
+        [PLUGIN]: { config: { baseUrl: `http://127.0.0.1:${fake.port}` } },
       },
     }),
   );
@@ -117,22 +118,24 @@ beforeAll(async () => {
 afterAll(async () => {
   proc?.kill("SIGTERM");
   await proc?.exited;
-  await exa?.stop(true);
+  await fake?.stop(true);
 });
 
-test("web_search_exa and web_fetch_exa run through the agent loop with the key from the secrets dir", async () => {
+test("both tools run through the agent loop with the key from the secrets dir", async () => {
   const plugins: Json = await api("/api/core/plugins");
   const states = Object.fromEntries(
     (Array.isArray(plugins) ? plugins : plugins.plugins).map((p: Json) => [p.id, p.state]),
   );
-  expect(states["valet-search-exa"]).toBe("active");
+  expect(states[PLUGIN]).toBe("active");
 
-  const search = await call("web_search_exa", { query: "valet plugins", recency: "month" });
-  expect(search.parts[0].data).toMatchObject({ name: "web_search_exa", status: "done" });
-  expect(search.parts[0].data.output).toBe("[1] Hit\nhttps://example.test/a\nfound it");
-  expect(requests[0]).toMatchObject({ path: "/search", key: "kernel-key", body: { query: "valet plugins" } });
+  const searchName = `web_search_${provider.id}`;
+  const search = await call(searchName, { query: "valet plugins", recency: "month" });
+  expect(search.parts[0].data).toMatchObject({ name: searchName, status: "done" });
+  expect(search.parts[0].data.output).toBe(kernel.output);
+  expect(requests[0]).toMatchObject({ path: kernel.searchPath, key: kernel.authValue });
 
-  const page = await call("web_fetch_exa", { urls: ["https://example.test/a"] });
-  expect(page.parts[0].data).toMatchObject({ name: "web_fetch_exa", status: "done" });
-  expect(requests[1]).toMatchObject({ path: "/contents", body: { urls: ["https://example.test/a"] } });
+  const fetchName = `web_fetch_${provider.id}`;
+  const page = await call(fetchName, { urls: ["https://example.test/a"] });
+  expect(page.parts[0].data).toMatchObject({ name: fetchName, status: "done" });
+  expect(requests[1]).toMatchObject({ path: kernel.fetchPath });
 });

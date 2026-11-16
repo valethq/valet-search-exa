@@ -50,6 +50,3 @@ export const call = (role: ToolCall["role"] = "trusted"): ToolCall => ({
 
 export const textOf = (r: { content: { type: string; text?: string }[] }) =>
   r.content.map((c) => c.text ?? "").join("");
-
-/** A minimal successful search reply in this provider's shape; shared tests use it. */
-export const ok = { results: [{ title: "T", url: "https://a.test", highlights: ["h"] }] };
